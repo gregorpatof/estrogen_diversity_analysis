@@ -1,4 +1,4 @@
-from omltk.fingerprints import get_fp_from_smiles, get_tanimoto_array
+from omltk.fingerprints import get_fp_from_smiles, get_tanimoto_array, compute_morgan_fps
 import numpy as np
 from multiprocessing import Pool
 import pandas as pd
@@ -55,9 +55,51 @@ def compute_chembl_fps():
     fps = np.array(results)
     np.save('data/chembl_fps.npy', fps)
 
+CHEMBL_SMILES, CHEMBL_IDS = get_chembl_smiles_names()
+CHEMBL_FPS = np.load('data/chembl_fps.npy')
+
+
+def get_smiles_list(filename):
+    with open(filename) as f:
+        lines = f.readlines()
+    smiles_list = []
+    for line in lines:
+        smiles = line.split()[0]
+        smiles_list.append(smiles)
+    return smiles_list
+
+
+def get_closest_chembl_df():
+    for target in ['6B0F', '7UJ7']:
+        filename = f"data/{target}_raw.smi"
+        smiles_list = get_smiles_list(filename)
+        fps, names = compute_morgan_fps(filename)
+        chunks = np.array_split(fps, 1000)
+        with Pool(64) as p:
+            results = p.map(get_closest_chembl_chunk, chunks)
+        fout = open(f'dataframes/{target}_chembl_closest.df', 'w')
+        fout.write('smiles id chembl_closest_td closest_smiles closest_id\n')
+        count = 0
+        for chunk in results:
+            for data in chunk:
+                fout.write(f'{smiles_list[count]} {names[count]} {" ".join([str(x) for x in data])}\n')
+                count += 1
+        fout.close()
+
+
+def get_closest_chembl_chunk(fps):
+    data = []
+    array = get_tanimoto_array(CHEMBL_FPS, fps)
+    for row in array:
+        closest = np.argmax(row)
+        td = 1 - row[closest]
+        data.append([td, CHEMBL_SMILES[closest], CHEMBL_IDS[closest])
+    return data
+
 
 if __name__ == "__main__":
     # make_chembl_smi()
-    compute_valid_smiles()
-    compute_chembl_fps()
+    # compute_valid_smiles()
+    # compute_chembl_fps()
+
 
