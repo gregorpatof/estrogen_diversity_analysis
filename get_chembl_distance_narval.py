@@ -18,7 +18,7 @@ def make_chembl_smi():
     fout.close()
 
 def compute_valid_smiles():
-    smiles_list, names_list = get_chembl_smiles_names()
+    smiles_list, names_list = get_chembl_smiles_names(path="/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles.smi")
     with Pool(64) as p:
         is_valid = p.map(is_valid_smiles, smiles_list)
     fout = open("/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles_valid.smi", "w")
@@ -57,7 +57,7 @@ def compute_chembl_fps():
 
 
 if __name__ == "__main__":
-    make_chembl_smi()
+    # make_chembl_smi()
     compute_valid_smiles()
     # compute_chembl_fps()
 
