@@ -6,5 +6,5 @@ import pandas as pd
 
 
 if __name__ == "__main__":
-    chembl_df = pd.read_csv("/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_chembl36_part1.csv")
+    chembl_df = pd.read_csv("/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_chembl36_part1.csv", sep=";", quotechar='"')
 
