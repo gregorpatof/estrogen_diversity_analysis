@@ -10,6 +10,8 @@ def make_chembl_smi():
     cids = [x for x in chembl_df["ChEMBL ID"].values]
     smiles_list = [x for x in chembl_df["Smiles"].values]
     for smiles, cid in zip(smiles_list, cids):
+        if smiles == 'nan':
+            continue
         fout.write(f"{smiles} {cid}\n")
     fout.close()
 
@@ -34,6 +36,6 @@ def compute_chembl_fps():
 
 
 if __name__ == "__main__":
-    # make_chembl_smi()
+    make_chembl_smi()
     compute_chembl_fps()
 
