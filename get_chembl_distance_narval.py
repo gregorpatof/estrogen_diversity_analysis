@@ -93,7 +93,8 @@ def get_closest_chembl_chunk(fps):
     for row in array:
         closest = np.argmax(row)
         td = 1 - row[closest]
-        data.append([td, CHEMBL_SMILES[closest], CHEMBL_IDS[closest])
+        data.append([td, CHEMBL_SMILES[closest], CHEMBL_IDS[closest]])
+    print(data[-1])
     return data
 
 
@@ -101,5 +102,6 @@ if __name__ == "__main__":
     # make_chembl_smi()
     # compute_valid_smiles()
     # compute_chembl_fps()
+    get_closest_chembl_df()
 
 
