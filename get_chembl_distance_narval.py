@@ -79,6 +79,7 @@ def get_closest_chembl_chunk(query_fps):
     sim = get_tanimoto_array(_CHEMBL_FPS, query_fps)   # (n_query, n_chembl)
     closest = np.argmax(sim, axis=1)
     td = 1.0 - sim[np.arange(sim.shape[0]), closest]
+    print(td[-1])
     return closest.astype(np.int32), td.astype(np.float32)
 
 def get_closest_chembl_df():
