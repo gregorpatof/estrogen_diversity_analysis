@@ -55,8 +55,7 @@ def compute_chembl_fps():
     fps = np.array(results)
     np.save('data/chembl_fps.npy', fps)
 
-CHEMBL_SMILES, CHEMBL_IDS = get_chembl_smiles_names()
-CHEMBL_FPS = np.load('data/chembl_fps.npy')
+
 
 
 def get_smiles_list(filename):
@@ -88,6 +87,9 @@ def get_closest_chembl_df():
 
 
 def get_closest_chembl_chunk(fps):
+    CHEMBL_SMILES, CHEMBL_IDS = get_chembl_smiles_names()
+    CHEMBL_FPS = np.load('data/chembl_fps.npy')
+    print('starting')
     data = []
     array = get_tanimoto_array(CHEMBL_FPS, fps)
     for row in array:
