@@ -4,6 +4,13 @@ from multiprocessing import Pool
 import pandas as pd
 from rdkit import Chem
 
+CHEMBL_FPS_PATH = "data/chembl_fps.npy"
+
+_CHEMBL_FPS = None  # populated once per worker; never pickled across the boundary
+
+def _init_worker(path):
+    global _CHEMBL_FPS
+    _CHEMBL_FPS = np.load(path, mmap_mode="r")
 
 def make_chembl_smi():
     fout = open("/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles.smi", "w")
@@ -68,36 +75,33 @@ def get_smiles_list(filename):
     return smiles_list
 
 
+def get_closest_chembl_chunk(query_fps):
+    sim = get_tanimoto_array(_CHEMBL_FPS, query_fps)   # (n_query, n_chembl)
+    closest = np.argmax(sim, axis=1)
+    td = 1.0 - sim[np.arange(sim.shape[0]), closest]
+    return closest.astype(np.int32), td.astype(np.float32)
+
 def get_closest_chembl_df():
-    for target in ['6B0F', '7UJ7']:
-        filename = f"data/{target}_raw.smi"
-        smiles_list = get_smiles_list(filename)
-        fps, names = compute_morgan_fps(filename)
-        chunks = np.array_split(fps, 1000)
-        with Pool(64) as p:
+    chembl_smiles, chembl_ids = get_chembl_smiles_names()   # parent only
+
+    with Pool(64, initializer=_init_worker, initargs=(CHEMBL_FPS_PATH,)) as p:
+        for target in ("6B0F", "7UJ7"):
+            filename = f"data/{target}_raw.smi"
+            smiles_list = get_smiles_list(filename)
+            fps, names = compute_morgan_fps(filename)
+            chunks = np.array_split(fps, 1000)              # ~70 queries/chunk
             results = p.map(get_closest_chembl_chunk, chunks)
-        fout = open(f'dataframes/{target}_chembl_closest.df', 'w')
-        fout.write('smiles id chembl_closest_td closest_smiles closest_id\n')
-        count = 0
-        for chunk in results:
-            for data in chunk:
-                fout.write(f'{smiles_list[count]} {names[count]} {" ".join([str(x) for x in data])}\n')
-                count += 1
-        fout.close()
 
-
-def get_closest_chembl_chunk(fps):
-    CHEMBL_SMILES, CHEMBL_IDS = get_chembl_smiles_names()
-    CHEMBL_FPS = np.load('data/chembl_fps.npy')
-    print('starting')
-    data = []
-    array = get_tanimoto_array(CHEMBL_FPS, fps)
-    for row in array:
-        closest = np.argmax(row)
-        td = 1 - row[closest]
-        data.append([td, CHEMBL_SMILES[closest], CHEMBL_IDS[closest]])
-    print(data[-1])
-    return data
+            with open(f"dataframes/{target}_chembl_closest.df", "w") as fout:
+                fout.write("smiles id chembl_closest_td closest_smiles closest_id\n")
+                count = 0
+                for closest_idx, td in results:
+                    for ci, d in zip(closest_idx, td):
+                        fout.write(
+                            f"{smiles_list[count]} {names[count]} "
+                            f"{d} {chembl_smiles[ci]} {chembl_ids[ci]}\n"
+                        )
+                        count += 1
 
 
 if __name__ == "__main__":
