@@ -58,6 +58,6 @@ def compute_chembl_fps():
 
 if __name__ == "__main__":
     # make_chembl_smi()
-    # compute_valid_smiles()
+    compute_valid_smiles()
     compute_chembl_fps()
 
