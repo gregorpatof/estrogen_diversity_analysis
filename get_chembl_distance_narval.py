@@ -2,6 +2,8 @@ from omltk.fingerprints import get_fp_from_smiles, get_tanimoto_array
 import numpy as np
 from multiprocessing import Pool
 import pandas as pd
+from rdkit import Chem
+
 
 def make_chembl_smi():
     fout = open("/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles.smi", "w")
@@ -15,8 +17,27 @@ def make_chembl_smi():
         fout.write(f"{smiles} {cid}\n")
     fout.close()
 
-def get_chembl_smiles_names():
-    with open('/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles.smi') as f:
+def compute_valid_smiles():
+    smiles_list, names_list = get_chembl_smiles_names()
+    with Pool(64) as p:
+        is_valid = p.map(is_valid_smiles, smiles_list)
+    fout = open("/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles_valid.smi", "w")
+    for v, i in enumerate(is_valid):
+        if v:
+            fout.write(f"{smiles_list[i]} {names_list[i]}\n")
+    fout.close()
+
+
+
+def is_valid_smiles(smiles):
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        return mol is not None
+    except Exception:
+        return False
+
+def get_chembl_smiles_names(path='/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles_valid.smi'):
+    with open(path) as f:
         lines = f.readlines()
     smiles_list = []
     names_list = []
@@ -37,5 +58,6 @@ def compute_chembl_fps():
 
 if __name__ == "__main__":
     make_chembl_smi()
-    compute_chembl_fps()
+    compute_valid_smiles()
+    # compute_chembl_fps()
 
