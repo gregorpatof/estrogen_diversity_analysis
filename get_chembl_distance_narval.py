@@ -13,7 +13,27 @@ def make_chembl_smi():
         fout.write(f"{smiles} {cid}\n")
     fout.close()
 
+def get_chembl_smiles_names():
+    with open('/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles.smi') as f:
+        lines = f.readlines()
+    smiles_list = []
+    names_list = []
+    for line in lines:
+        smiles, name = line.split()
+        smiles_list.append(smiles)
+        names_list.append(name)
+    return smiles_list, names_list
+
+
+def compute_chembl_fps():
+    smiles_list, names_list = get_chembl_smiles_names()
+    with Pool(64) as p:
+        results = p.map(get_fp_from_smiles, smiles_list)
+    fps = np.array(results)
+    np.save('data/chembl_fps.npy', fps)
+
 
 if __name__ == "__main__":
-    make_chembl_smi()
+    # make_chembl_smi()
+    compute_chembl_fps()
 
