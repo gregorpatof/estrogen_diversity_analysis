@@ -22,7 +22,7 @@ def compute_valid_smiles():
     with Pool(64) as p:
         is_valid = p.map(is_valid_smiles, smiles_list)
     fout = open("/home/mailhoto/projects/rrg-mailhoto/share/chembl36/all_smiles_valid.smi", "w")
-    for v, i in enumerate(is_valid):
+    for i, v in enumerate(is_valid):
         if v:
             fout.write(f"{smiles_list[i]} {names_list[i]}\n")
     fout.close()
