@@ -10,7 +10,7 @@ def make_chembl_smi():
     cids = [x for x in chembl_df["ChEMBL ID"].values]
     smiles_list = [x for x in chembl_df["Smiles"].values]
     for smiles, cid in zip(smiles_list, cids):
-        if smiles == 'nan':
+        if 'nan' in smiles:
             continue
         fout.write(f"{smiles} {cid}\n")
     fout.close()
